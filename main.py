@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi import Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from diffusers import DiffusionPipeline
@@ -13,6 +14,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173",
+                   "https://react-portfolio-git-main-pacicaps-projects.vercel.app",
                    "https://react-portfolio-ij8ifou62-pacicaps-projects.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,7 +34,7 @@ class PromptInput(BaseModel):
     model: str  # should be "model1" or "model2"
 
 @app.post("/generate")
-def generate(data: PromptInput):
+def generate(data: PromptInput, request: Request):
     model_key = data.model
 
     if model_key not in hf_model_ids:
@@ -54,7 +56,10 @@ def generate(data: PromptInput):
     filepath = os.path.join("generated", filename)
     image.save(filepath)
 
-    return {"url": f"http://localhost:8000/generated/{filename}"}
+    image_url = f"{request.base_url}generated/{filename}"
+    return {"url": image_url}
+
+    #return {"url": f"http://localhost:8000/generated/{filename}"}
 
 # Serve images
 app.mount("/generated", StaticFiles(directory="generated"), name="generated")
